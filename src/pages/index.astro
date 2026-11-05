@@ -3,22 +3,93 @@ import Base from '../layouts/Base.astro';
 import Ledger from '../components/Ledger.astro';
 import PlatformTabs from '../components/PlatformTabs.astro';
 import ViewTabs from '../components/ViewTabs.astro';
-import { loadView } from '../lib/data';
-import { MAX_ROWS, SITE, link } from '../lib/site';
+import { freshRepos, loadView, readIndex, platformTicks } from '../lib/data';
+import { clean, compact, releasedPrecise } from '../lib/format';
+import { MAX_ROWS, PLATFORMS, SITE, link } from '../lib/site';
 
 const platform = 'all';
 const view = 'trending';
 const repos = loadView(platform, view);
 const shown = repos.slice(0, MAX_ROWS);
+const fresh = freshRepos(24, 3);
+const index = readIndex();
+const totalProjects = index.length;
+const freshWeek = index.filter((repo) => {
+  const parsed = repo.latestReleaseDate ? Date.parse(repo.latestReleaseDate) : NaN;
+  return !Number.isNaN(parsed) && Date.now() - parsed <= 7 * 86_400_000;
+}).length;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  url: new URL(link(''), Astro.site).href,
+  description: SITE.description,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${new URL(link('search/'), Astro.site).href}?q={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
+};
 ---
 
 <Base title={`${SITE.name}, browse open-source releases`}>
   <div class="container">
-    <section class="masthead">
-      <h1>Every open-source release, <em>on one shelf</em>.</h1>
-      <p class="masthead__sub">
-        Browse apps published as GitHub releases. Pick a platform, then trending, new or most installed.
-      </p>
+    <section class="masthead masthead--split">
+      <div>
+        <div class="masthead__text">
+          <h1>Every open-source release, <em>on one shelf</em>.</h1>
+          <p class="masthead__sub">
+            {totalProjects.toLocaleString('en')} projects that publish install files on GitHub, sorted into shelves you can scan.
+            Pick a platform, then a shelf.
+          </p>
+        </div>
+
+        <ul class="hero-stats">
+          <li>
+            <strong>{freshWeek.toLocaleString('en')}</strong>
+            <a href={link('browse/all/new-releases/')}>new this week</a>
+          </li>
+          <li>
+            <strong>5</strong>
+            <a href={link('topics/')}>topic shelves</a>
+          </li>
+          <li>
+            <strong>4</strong>
+            <a href={link('browse/all/trending/')}>platforms</a>
+          </li>
+        </ul>
+      </div>
+
+      {fresh.repos.length > 0 && (
+        <aside class="today" aria-labelledby="today-title">
+          <div class="today__head">
+            <h2 class="today__title" id="today-title">Released today</h2>
+            <span class="shelf__count">{fresh.total} in {fresh.windowHours}h</span>
+          </div>
+          {fresh.repos.map((repo, position) => (
+            <a
+              class={position === 0 ? 'today__lead' : 'today__item'}
+              href={link(`app/${repo.owner.login}/${repo.name}/`)} data-astro-prefetch
+            >
+              <span class="today__name">{repo.name}</span>
+              <span class="today__desc">{clean(repo.description) || 'No description yet.'}</span>
+              <span class="today__meta">
+                <span><strong>{compact(repo.stargazersCount)}</strong> stars</span>
+                <span>{compact(repo.downloadCount)} installs</span>
+                <span class="today__fresh">{releasedPrecise(repo.latestReleaseDate)}</span>
+                {platformTicks(repo).map((tick) => (
+                  <span class="tick tick--on" title={tick.label}>{tick.tick}</span>
+                ))}
+              </span>
+            </a>
+          ))}
+          <p class="today__meta">
+            <span>Newest releases across every platform.</span>
+            <a href={link('browse/all/new-releases/')} class="inline-link" data-astro-prefetch>All new releases</a>
+          </p>
+        </aside>
+      )}
     </section>
 
     <div class="controls">
@@ -30,18 +101,20 @@ const shown = repos.slice(0, MAX_ROWS);
         <span class="controls__label">Shelf</span>
         <ViewTabs platform={platform} active={view} />
       </div>
+      <span class="shelf__count">{repos.length} apps</span>
     </div>
 
-    <section class="shelf" aria-labelledby="shelf-title">
-      <div class="shelf__head">
-        <h2 class="shelf__title" id="shelf-title">Trending across every platform</h2>
-        <span class="shelf__count">{repos.length} apps</span>
-      </div>
+    <p class="legend">
+      <span>Letters mark platforms with install files:</span>
+      {PLATFORMS.map((entry) => (
+        <span><span class="tick tick--on">{entry.tick}</span>{entry.label}</span>
+      ))}
+    </p>
+
+    <section class="shelf" aria-label="Trending across every platform">
       <Ledger repos={shown} platform={platform} total={repos.length} />
     </section>
 
-    <p class="status">
-      Installs happen on GitHub. <a href={link('about/')} style="color: var(--accent); text-decoration: underline;">How the shelf works</a>.
-    </p>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </div>
 </Base>

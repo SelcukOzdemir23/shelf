@@ -160,3 +160,27 @@ export function reposSharingTopics(repo: Repo, limit = 3): Repo[] {
 export function topicSlugs(): string[] {
   return TOPICS.map((topic) => topic.slug);
 }
+
+export interface FreshSelection {
+  repos: Repo[];
+  windowHours: number;
+  total: number;
+}
+
+export function freshRepos(preferredHours = 24, limit = 3): FreshSelection {
+  const within = (hours: number) =>
+    readIndex().filter((repo) => {
+      if (!repo.latestReleaseDate) return false;
+      const parsed = Date.parse(repo.latestReleaseDate);
+      return !Number.isNaN(parsed) && Date.now() - parsed <= hours * 3_600_000;
+    });
+
+  let windowHours = preferredHours;
+  let candidates = within(windowHours);
+  if (candidates.length < limit) {
+    windowHours = 48;
+    candidates = within(windowHours);
+  }
+  candidates.sort((a, b) => (b.stargazersCount ?? 0) - (a.stargazersCount ?? 0));
+  return { repos: candidates.slice(0, limit), windowHours, total: candidates.length };
+}

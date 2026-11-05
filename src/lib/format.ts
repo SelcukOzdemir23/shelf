@@ -44,3 +44,14 @@ export function clean(text?: string | null): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+export function releasedPrecise(iso?: string | null): string {
+  if (!iso) return 'unknown';
+  const parsed = Date.parse(iso);
+  if (Number.isNaN(parsed)) return 'unknown';
+  const hours = Math.floor((Date.now() - parsed) / 3_600_000);
+  if (hours < 1) return 'just now';
+  if (hours < 24) return `${hours}h ago`;
+  if (hours < 48) return 'yesterday';
+  return released(iso);
+}

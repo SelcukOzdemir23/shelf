@@ -48,9 +48,9 @@ export interface ViewMeta {
 }
 
 export const VIEWS: ViewMeta[] = [
-  { slug: 'trending', label: 'Trending', hint: 'Moving fastest this week', source: 'categories', name: 'trending' },
-  { slug: 'new-releases', label: 'New releases', hint: 'Fresh off the tag', source: 'categories', name: 'new-releases' },
-  { slug: 'most-popular', label: 'Most popular', hint: 'Most downloaded through the app', source: 'categories', name: 'most-popular' },
+  { slug: 'trending', label: 'Trending', hint: 'Ranked by how fast these projects moved this week', source: 'categories', name: 'trending' },
+  { slug: 'new-releases', label: 'New releases', hint: 'Newest tagged release first', source: 'categories', name: 'new-releases' },
+  { slug: 'most-popular', label: 'Most popular', hint: 'Ranked by installs the app has recorded', source: 'categories', name: 'most-popular' },
 ];
 
 export const TOPICS = [

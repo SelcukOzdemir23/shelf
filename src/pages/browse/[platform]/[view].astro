@@ -4,7 +4,8 @@ import Ledger from '../../../components/Ledger.astro';
 import PlatformTabs from '../../../components/PlatformTabs.astro';
 import ViewTabs from '../../../components/ViewTabs.astro';
 import { loadView } from '../../../lib/data';
-import { MAX_ROWS, PLATFORM_SLUGS, VIEWS, link, platformLabel, viewLabel, SITE } from '../../../lib/site';
+import { itemListJsonLd } from '../../../lib/seo';
+import { MAX_ROWS, PLATFORM_SLUGS, PLATFORMS, VIEWS, link, platformLabel, viewLabel, SITE } from '../../../lib/site';
 
 export function getStaticPaths() {
   return PLATFORM_SLUGS.flatMap((platform) =>
@@ -20,6 +21,7 @@ const heading =
   platform === 'all' ? `${meta.label} across every platform` : `${meta.label} for ${platformLabel(platform!)}`;
 const canonical = platform === 'all' && view === 'trending' ? new URL(link(''), Astro.site) : undefined;
 const pattern = `browse/{platform}/${view}/`;
+const jsonLd = itemListJsonLd(repos, `${meta.label} for ${platformLabel(platform!)}`, Astro.site);
 ---
 
 <Base
@@ -45,6 +47,15 @@ const pattern = `browse/{platform}/${view}/`;
       <span class="shelf__count">{repos.length} apps</span>
     </div>
 
+    {platform === 'all' && (
+      <p class="legend">
+        <span>Letters mark platforms with install files:</span>
+        {PLATFORMS.map((entry) => (
+          <span><span class="tick tick--on">{entry.tick}</span>{entry.label}</span>
+        ))}
+      </p>
+    )}
+
     <section class="shelf" aria-label={`${meta.label} for ${platformLabel(platform!)}`}>
       {repos.length > 0 ? (
         <Ledger repos={shown} platform={platform!} total={repos.length} />
@@ -52,5 +63,7 @@ const pattern = `browse/{platform}/${view}/`;
         <p class="status">This shelf is empty in the current data build. Try the topics index instead.</p>
       )}
     </section>
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </div>
 </Base>

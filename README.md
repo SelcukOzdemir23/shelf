@@ -9,7 +9,8 @@ Live: https://selcukozdemir23.github.io/shelf/
 
 - Astro 5 with static output, TypeScript, plain CSS with design tokens
 - Self-hosted fonts (Bricolage Grotesque, Instrument Sans, IBM Plex Mono)
-- No client framework. The only JavaScript is the theme toggle and the search page
+- No client framework. Client JavaScript is limited to the search page and Astro's hover prefetch
+- Theme follows the system setting, with a `prefers-contrast: more` variant
 
 ## Run locally
 

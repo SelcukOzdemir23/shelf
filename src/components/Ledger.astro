@@ -35,7 +35,7 @@ function pathFor(repo: Repo): string {
     }));
     return (
       <li>
-        <a class="row" href={pathFor(repo)}>
+        <a class="row" href={pathFor(repo)} data-astro-prefetch>
           <span class="row__index mono">{String(position + 1).padStart(2, '0')}</span>
           <span class="row__main">
             <img

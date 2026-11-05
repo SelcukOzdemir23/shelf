@@ -3,10 +3,13 @@ import Base from '../../layouts/Base.astro';
 import { loadTopic } from '../../lib/data';
 import { TOPICS, link, SITE, PLATFORMS } from '../../lib/site';
 
-const rows = TOPICS.map((topic) => ({
-  ...topic,
-  count: loadTopic('all', topic.slug).length,
-}));
+const rows = TOPICS.map((topic) => {
+  const platforms = PLATFORMS.map((platform) => ({
+    ...platform,
+    count: loadTopic(platform.slug, topic.slug).length,
+  })).filter((platform) => platform.count > 0);
+  return { ...topic, count: loadTopic('all', topic.slug).length, platforms };
+});
 ---
 
 <Base
@@ -27,10 +30,17 @@ const rows = TOPICS.map((topic) => ({
           <a class="topic-row__name" href={link(`topics/${topic.slug}/all/`)}>{topic.label}</a>
           <p class="topic-row__blurb">{topic.blurb}</p>
           <div class="topic-row__links">
-            <a class="tab" href={link(`topics/${topic.slug}/all/`)}>{topic.count} apps</a>
-            {PLATFORMS.map((platform) => (
-              <a class="tab" href={link(`topics/${topic.slug}/${platform.slug}/`)}>{platform.label}</a>
-            ))}
+            <a class="topic-row__apps" href={link(`topics/${topic.slug}/all/`)}>{topic.count} apps</a>
+            <span class="topic-row__ticks">
+              {topic.platforms.map((platform) => (
+                <a
+                  class="tick tick--on"
+                  href={link(`topics/${topic.slug}/${platform.slug}/`)}
+                  title={`${platform.count} for ${platform.label}`}
+                  aria-label={`${topic.label} for ${platform.label}, ${platform.count} apps`}
+                >{platform.tick}</a>
+              ))}
+            </span>
           </div>
         </li>
       ))}
