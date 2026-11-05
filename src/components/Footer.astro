@@ -1,0 +1,23 @@
+---
+import { link, SITE } from '../lib/site';
+import { readBuild } from '../lib/data';
+import { shortDate } from '../lib/format';
+
+const build = readBuild();
+const builtAt = build ? shortDate(build.builtAt) : null;
+---
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <p>
+      An independent project. Not affiliated with Komi Store. Data comes from the
+      <a href={SITE.dataUrl} rel="noopener noreferrer" target="_blank">public mirror</a>
+      the app publishes, installs happen on GitHub.
+    </p>
+    <p class="footer__meta">
+      {builtAt && <span>Data built {builtAt} · </span>}
+      <a href={link('about/')}>How this works</a> ·
+      <a href={SITE.sourceUrl} rel="noopener noreferrer" target="_blank">Source</a>
+    </p>
+  </div>
+</footer>

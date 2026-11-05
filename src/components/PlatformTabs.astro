@@ -1,0 +1,24 @@
+---
+import { ALL_PLATFORM, PLATFORMS, link } from '../lib/site';
+
+interface Props {
+  active: string;
+  pattern: string;
+}
+
+const { active, pattern } = Astro.props;
+const entries = [
+  { slug: ALL_PLATFORM.slug, label: 'All' },
+  ...PLATFORMS.map((platform) => ({ slug: platform.slug, label: platform.label })),
+];
+---
+
+<div class="platforms" aria-label="Platform">
+  {entries.map((entry) => (
+    <a
+      class="tab"
+      href={link(pattern.replace('{platform}', entry.slug))}
+      aria-current={entry.slug === active ? 'page' : undefined}
+    >{entry.label}</a>
+  ))}
+</div>

@@ -1,0 +1,80 @@
+---
+import type { Repo } from '../lib/data';
+import { clean, compact, isFresh, released } from '../lib/format';
+import { PLATFORMS, link } from '../lib/site';
+
+interface Props {
+  repos: Repo[];
+  platform: string;
+  total: number;
+}
+
+const { repos, platform, total } = Astro.props;
+const hidden = Math.max(total - repos.length, 0);
+
+function pathFor(repo: Repo): string {
+  return link(`app/${repo.owner.login}/${repo.name}/`);
+}
+---
+
+<div class="ledger__head" aria-hidden="true">
+  <span>#</span>
+  <span>Project</span>
+  <span>Platform</span>
+  <span>Stars</span>
+  <span>Installs</span>
+  <span>Released</span>
+</div>
+
+<ol class="ledger">
+  {repos.map((repo, position) => {
+    const ticks = PLATFORMS.map((entry) => ({
+      tick: entry.tick,
+      label: entry.label,
+      on: repo[entry.field] === true,
+    }));
+    return (
+      <li>
+        <a class="row" href={pathFor(repo)}>
+          <span class="row__index mono">{String(position + 1).padStart(2, '0')}</span>
+          <span class="row__main">
+            <img
+              class="row__avatar"
+              src={repo.owner.avatarUrl}
+              alt=""
+              width="30"
+              height="30"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="row__text">
+              <span class="row__title">
+                <span class="row__name">{repo.name}</span>
+                <span class="row__owner">{repo.owner.login}</span>
+              </span>
+              <span class="row__desc">{clean(repo.description) || 'No description yet.'}</span>
+            </span>
+          </span>
+          <span class="row__ticks">
+            {ticks.map((tick) => (
+              <span class={tick.on ? 'tick tick--on' : 'tick'} title={tick.label} aria-label={tick.on ? tick.label : `${tick.label}: no installer`}>
+                {tick.tick}
+              </span>
+            ))}
+          </span>
+          <span class="row__stat row__stars">{compact(repo.stargazersCount)}</span>
+          <span class="row__stat row__installs">{compact(repo.downloadCount)}</span>
+          <span class={isFresh(repo.latestReleaseDate) ? 'row__stat row__updated row__fresh' : 'row__stat row__updated'}>
+            {released(repo.latestReleaseDate)}
+          </span>
+        </a>
+      </li>
+    );
+  })}
+</ol>
+{hidden > 0 && (
+  <p class="status">
+    Showing the first {repos.length} of {total}, in this shelf's order.
+    {' '}<a href={link('search/')} class="inline-link">Search</a> reaches the rest.
+  </p>
+)}

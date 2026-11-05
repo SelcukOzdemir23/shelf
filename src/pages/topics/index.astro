@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import { loadTopic } from '../../lib/data';
+import { TOPICS, link, SITE, PLATFORMS } from '../../lib/site';
+
+const rows = TOPICS.map((topic) => ({
+  ...topic,
+  count: loadTopic('all', topic.slug).length,
+}));
+---
+
+<Base
+  title={`Topics · ${SITE.name}`}
+  description="Browse open-source release apps by topic: privacy, media, productivity, networking and developer tools."
+>
+  <div class="container">
+    <section class="masthead">
+      <h1>Shelves by topic</h1>
+      <p class="masthead__sub">
+        Five topics the app groups releases into. Each one lists projects per platform, so you can see what runs on yours.
+      </p>
+    </section>
+
+    <ul class="topics-ledger">
+      {rows.map((topic) => (
+        <li class="topic-row">
+          <a class="topic-row__name" href={link(`topics/${topic.slug}/all/`)}>{topic.label}</a>
+          <p class="topic-row__blurb">{topic.blurb}</p>
+          <div class="topic-row__links">
+            <a class="tab" href={link(`topics/${topic.slug}/all/`)}>{topic.count} apps</a>
+            {PLATFORMS.map((platform) => (
+              <a class="tab" href={link(`topics/${topic.slug}/${platform.slug}/`)}>{platform.label}</a>
+            ))}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>

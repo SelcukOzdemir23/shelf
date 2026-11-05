@@ -1,0 +1,77 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, link } from '../lib/site';
+import { readBuild } from '../lib/data';
+import { shortDate } from '../lib/format';
+
+const build = readBuild();
+---
+
+<Base
+  title={`About · ${SITE.name}`}
+  description="What this catalogue is, where the data comes from, what it deliberately does not do, and how to run it yourself."
+>
+  <div class="container">
+    <div class="prose">
+      <h1>What this is</h1>
+      <p>
+        Shelf is an independent, read-only catalogue of open-source applications that publish their builds as
+        GitHub releases. It exists because those releases are public but not easy to browse: this site puts
+        them on shelves by platform, recency and topic.
+      </p>
+
+      <div class="notice">
+        <strong>Not affiliated with Komi Store.</strong> This is a separate project. It uses the same public
+        data the Komi Store app reads as its offline fallback, but it shares no branding, no code ownership
+        and no support channel with that project. The name, the mark and this site belong to this project only.
+      </div>
+
+      <h2>Where the data comes from</h2>
+      <p>
+        The shelves are fetched at build time from the
+        <a href={SITE.dataUrl} rel="noopener noreferrer" target="_blank">komi-store-backend-data</a> mirror,
+        the public fallback channel the app itself uses when its API is unreachable. Files sit on GitHub's
+        static host, so this site never calls the app's API server.
+      </p>
+      <ul>
+        <li>One shelf file per category, topic and platform.</li>
+        <li>Records are deduplicated by repository id and ranked per shelf.</li>
+        <li>Repository metadata (stars, releases, licence field) originates from GitHub itself.</li>
+      </ul>
+      {build && (
+        <p>
+          This build used {build.mirrors} shelf files and {build.repos.toLocaleString('en')} repositories, fetched on
+          {' '}{shortDate(build.builtAt)}. Data therefore lags the mirror by one build.
+        </p>
+      )}
+
+      <h2>What it does not do</h2>
+      <ul>
+        <li>No installs. Download links open the project's GitHub release page.</li>
+        <li>No accounts, no favourites, no ratings, no tracking scripts.</li>
+        <li>No live API. Everything you see is in the HTML of the page.</li>
+        <li>No screenshots or README rendering. Those need the project API, which is not public from browsers.</li>
+      </ul>
+
+      <h2>Licences and credit</h2>
+      <p>
+        Site code is MIT licensed. The mirrored data is published by the Komi Store project under
+        Apache-2.0, and the underlying repository data belongs to GitHub and the individual projects.
+        If you fork this catalogue, keep the attribution and do not imply endorsement by Komi Store.
+      </p>
+
+      <h2>Running it</h2>
+      <p>
+        The site is Astro with static output. Fetch the data, then build:
+      </p>
+      <pre>npm install
+npm run data
+npm run build</pre>
+      <p>
+        Source and issue tracker: <a href={SITE.sourceUrl} rel="noopener noreferrer" target="_blank">{SITE.sourceUrl}</a>.
+        Something wrong with a project entry? Open an issue there, the data itself comes from the mirror.
+      </p>
+      <p><a href={link('')}>Back to the shelf</a></p>
+    </div>
+  </div>
+</Base>

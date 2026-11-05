@@ -1,0 +1,20 @@
+---
+import { VIEWS, link } from '../lib/site';
+
+interface Props {
+  platform: string;
+  active: string;
+}
+
+const { platform, active } = Astro.props;
+---
+
+<div class="views" aria-label="Shelf">
+  {VIEWS.map((view) => (
+    <a
+      class="tab"
+      href={link(`browse/${platform}/${view.slug}/`)}
+      aria-current={view.slug === active ? 'page' : undefined}
+    >{view.label}</a>
+  ))}
+</div>

@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import Ledger from '../components/Ledger.astro';
+import PlatformTabs from '../components/PlatformTabs.astro';
+import ViewTabs from '../components/ViewTabs.astro';
+import { loadView } from '../lib/data';
+import { MAX_ROWS, SITE, link } from '../lib/site';
+
+const platform = 'all';
+const view = 'trending';
+const repos = loadView(platform, view);
+const shown = repos.slice(0, MAX_ROWS);
+---
+
+<Base title={`${SITE.name}, browse open-source releases`}>
+  <div class="container">
+    <section class="masthead">
+      <h1>Every open-source release, <em>on one shelf</em>.</h1>
+      <p class="masthead__sub">
+        Browse apps published as GitHub releases. Pick a platform, then trending, new or most installed.
+      </p>
+    </section>
+
+    <div class="controls">
+      <div class="controls__group">
+        <span class="controls__label">Platform</span>
+        <PlatformTabs active={platform} pattern="browse/{platform}/trending/" />
+      </div>
+      <div class="controls__group">
+        <span class="controls__label">Shelf</span>
+        <ViewTabs platform={platform} active={view} />
+      </div>
+    </div>
+
+    <section class="shelf" aria-labelledby="shelf-title">
+      <div class="shelf__head">
+        <h2 class="shelf__title" id="shelf-title">Trending across every platform</h2>
+        <span class="shelf__count">{repos.length} apps</span>
+      </div>
+      <Ledger repos={shown} platform={platform} total={repos.length} />
+    </section>
+
+    <p class="status">
+      Installs happen on GitHub. <a href={link('about/')} style="color: var(--accent); text-decoration: underline;">How the shelf works</a>.
+    </p>
+  </div>
+</Base>

@@ -1,0 +1,56 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Ledger from '../../../components/Ledger.astro';
+import PlatformTabs from '../../../components/PlatformTabs.astro';
+import ViewTabs from '../../../components/ViewTabs.astro';
+import { loadView } from '../../../lib/data';
+import { MAX_ROWS, PLATFORM_SLUGS, VIEWS, link, platformLabel, viewLabel, SITE } from '../../../lib/site';
+
+export function getStaticPaths() {
+  return PLATFORM_SLUGS.flatMap((platform) =>
+    VIEWS.map((view) => ({ params: { platform, view: view.slug } })),
+  );
+}
+
+const { platform, view } = Astro.params;
+const repos = loadView(platform!, view!);
+const shown = repos.slice(0, MAX_ROWS);
+const meta = VIEWS.find((entry) => entry.slug === view) ?? VIEWS[0];
+const heading =
+  platform === 'all' ? `${meta.label} across every platform` : `${meta.label} for ${platformLabel(platform!)}`;
+const canonical = platform === 'all' && view === 'trending' ? new URL(link(''), Astro.site) : undefined;
+const pattern = `browse/{platform}/${view}/`;
+---
+
+<Base
+  title={`${viewLabel(view!)} for ${platformLabel(platform!)} · ${SITE.name}`}
+  description={`${meta.label} open-source apps with ${platformLabel(platform!)} installers. ${repos.length} projects on this shelf, each linking to its GitHub releases.`}
+  canonical={canonical}
+>
+  <div class="container">
+    <section class="masthead">
+      <h1>{heading}</h1>
+      <p class="masthead__sub">{meta.hint}. Rows link to the project, install files stay on GitHub.</p>
+    </section>
+
+    <div class="controls">
+      <div class="controls__group">
+        <span class="controls__label">Platform</span>
+        <PlatformTabs active={platform!} pattern={pattern} />
+      </div>
+      <div class="controls__group">
+        <span class="controls__label">Shelf</span>
+        <ViewTabs platform={platform!} active={view!} />
+      </div>
+      <span class="shelf__count">{repos.length} apps</span>
+    </div>
+
+    <section class="shelf" aria-label={`${meta.label} for ${platformLabel(platform!)}`}>
+      {repos.length > 0 ? (
+        <Ledger repos={shown} platform={platform!} total={repos.length} />
+      ) : (
+        <p class="status">This shelf is empty in the current data build. Try the topics index instead.</p>
+      )}
+    </section>
+  </div>
+</Base>

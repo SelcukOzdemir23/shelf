@@ -1,0 +1,60 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Ledger from '../../../components/Ledger.astro';
+import PlatformTabs from '../../../components/PlatformTabs.astro';
+import { loadTopic } from '../../../lib/data';
+import { MAX_ROWS, PLATFORM_SLUGS, TOPICS, link, platformLabel, topicLabel, SITE } from '../../../lib/site';
+
+export function getStaticPaths() {
+  return TOPICS.flatMap((topic) =>
+    PLATFORM_SLUGS.map((platform) => ({ params: { topic: topic.slug, platform } })),
+  );
+}
+
+const { topic, platform } = Astro.params;
+const meta = TOPICS.find((entry) => entry.slug === topic) ?? TOPICS[0];
+const repos = loadTopic(platform!, topic!);
+const shown = repos.slice(0, MAX_ROWS);
+const heading = platform === 'all' ? meta.label : `${meta.label} for ${platformLabel(platform!)}`;
+const pattern = `topics/${topic}/{platform}/`;
+---
+
+<Base
+  title={`${meta.label} for ${platformLabel(platform!)} · ${SITE.name}`}
+  description={`${meta.blurb}. ${repos.length} open-source projects with ${platformLabel(platform!)} releases.`}
+>
+  <div class="container">
+    <section class="masthead">
+      <h1>{heading}</h1>
+      <p class="masthead__sub">{meta.blurb}. Install files stay on GitHub.</p>
+    </section>
+
+    <div class="controls">
+      <div class="controls__group">
+        <span class="controls__label">Platform</span>
+        <PlatformTabs active={platform!} pattern={pattern} />
+      </div>
+      <div class="controls__group">
+        <span class="controls__label">Topics</span>
+        <div class="views">
+          {TOPICS.map((entry) => (
+            <a
+              class="tab"
+              href={link(`topics/${entry.slug}/${platform}/`)}
+              aria-current={entry.slug === topic ? 'page' : undefined}
+            >{entry.label}</a>
+          ))}
+        </div>
+      </div>
+      <span class="shelf__count">{repos.length} apps</span>
+    </div>
+
+    <section class="shelf" aria-label={`${topicLabel(topic!)} on ${platformLabel(platform!)}`}>
+      {repos.length > 0 ? (
+        <Ledger repos={shown} platform={platform!} total={repos.length} />
+      ) : (
+        <p class="status">Nothing in this topic on this platform in the current build.</p>
+      )}
+    </section>
+  </div>
+</Base>

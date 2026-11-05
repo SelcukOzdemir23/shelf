@@ -1,0 +1,14 @@
+---
+import Base from '../layouts/Base.astro';
+import { link } from '../lib/site';
+---
+
+<Base title="Not found · Shelf" noindex>
+  <div class="container">
+    <div class="prose">
+      <h1>That page is not on the shelf</h1>
+      <p>The link may be old, or the project may have left the data build.</p>
+      <p><a href={link('')}>Browse trending apps</a> or <a href={link('search/')}>search the catalogue</a>.</p>
+    </div>
+  </div>
+</Base>

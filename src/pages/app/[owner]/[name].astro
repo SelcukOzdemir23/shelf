@@ -1,0 +1,140 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { readIndex, platformTicks, releaseTag, reposSharingTopics } from '../../../lib/data';
+import { clean, compact, released, shortDate } from '../../../lib/format';
+import { PLATFORMS, SITE, TOPICS, link } from '../../../lib/site';
+
+export function getStaticPaths() {
+  return readIndex().map((repo) => {
+    const [owner, name] = repo.fullName.split('/');
+    return { params: { owner, name }, props: { repo } };
+  });
+}
+
+const { repo } = Astro.props;
+const ticks = platformTicks(repo);
+const tag = releaseTag(repo);
+const similar = reposSharingTopics(repo, 3);
+const topics = (repo.topics ?? []).filter((topic) =>
+  TOPICS.some((entry) => entry.slug === topic.toLowerCase()),
+);
+const description = clean(repo.description ?? `${repo.fullName} on GitHub`).slice(0, 160);
+const ogImage = `https://opengraph.githubassets.com/1/${repo.owner.login}/${repo.name}`;
+const releasesUrl = `${repo.htmlUrl}/releases`;
+const fullTitle = `${repo.name} by ${repo.owner.login} · ${SITE.name}`;
+const pageTitle = fullTitle.length > 68 ? `${repo.name} · ${SITE.name}` : fullTitle;
+
+const builds = PLATFORMS.map((platform) => {
+  const release = (repo.platformReleases ?? {})[platform.slug];
+  const hasInstaller = repo[platform.field] === true;
+  if (!release && !hasInstaller) return null;
+  return {
+    label: platform.label,
+    tag: release?.tag ?? null,
+    publishedAt: release?.publishedAt ?? null,
+  };
+}).filter((entry): entry is { label: string; tag: string | null; publishedAt: string | null } => entry !== null);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: repo.name,
+  description: clean(repo.description) || undefined,
+  url: repo.htmlUrl,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: ticks.map((tick) => tick.label).join(', ') || undefined,
+  softwareVersion: tag ?? undefined,
+  codeRepository: repo.htmlUrl,
+  author: { '@type': 'Organization', name: repo.owner.login, url: `https://github.com/${repo.owner.login}` },
+};
+---
+
+<Base title={pageTitle} description={description} image={ogImage} noindex={repo.archived === true}>
+  <div class="container">
+    <article class="detail">
+      <a class="detail__back" href={link('')}>All shelves</a>
+
+      <header class="detail__head">
+        <img class="detail__avatar" src={repo.owner.avatarUrl} alt="" width="72" height="72" />
+        <div>
+          <h1>{repo.name}</h1>
+          <p class="detail__owner">
+            by {repo.owner.login}{repo.language ? `, written in ${repo.language}` : ''}
+          </p>
+        </div>
+      </header>
+
+      {repo.description && <p class="detail__desc">{clean(repo.description)}</p>}
+
+      <div class="actions">
+        <a class="action" href={releasesUrl} rel="noopener noreferrer" target="_blank">Releases on GitHub</a>
+        <a class="action action--ghost" href={repo.htmlUrl} rel="noopener noreferrer" target="_blank">Repository</a>
+      </div>
+
+      <dl class="facts-strip">
+        <div><dt>Stars</dt><dd>{compact(repo.stargazersCount)}</dd></div>
+        <div><dt>Installs</dt><dd>{compact(repo.downloadCount)}</dd></div>
+        <div><dt>Forks</dt><dd>{compact(repo.forksCount)}</dd></div>
+        <div><dt>Issues</dt><dd>{compact(repo.openIssuesCount)}</dd></div>
+        <div><dt>Latest tag</dt><dd>{tag ?? 'none'}</dd></div>
+      </dl>
+
+      <section class="detail__section">
+        <h2>Latest builds</h2>
+        {builds.length > 0 ? (
+          <ul class="builds">
+            {builds.map((build) => (
+              <li>
+                <span class="builds__platform">{build.label}</span>
+                <span class="builds__tag">{build.tag ?? 'no tagged release'}</span>
+                <span class="builds__date">{build.publishedAt ? shortDate(build.publishedAt) : ''}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="status">No installer was detected for this project in the current data build.</p>
+        )}
+      </section>
+
+      <section class="detail__section">
+        <h2>Links</h2>
+        <ul class="link-list">
+          <li><a href={repo.htmlUrl} rel="noopener noreferrer" target="_blank">Repository on GitHub</a></li>
+          <li><a href={releasesUrl} rel="noopener noreferrer" target="_blank">Release files</a></li>
+          <li><a href={`https://github.com/${repo.owner.login}`} rel="noopener noreferrer" target="_blank">More from {repo.owner.login}</a></li>
+        </ul>
+      </section>
+
+      {topics.length > 0 && (
+        <section class="detail__section">
+          <h2>Topics</h2>
+          <ul class="topic-list">
+            {topics.map((topic) => (
+              <li><a href={link(`topics/${topic.toLowerCase()}/all/`)}>{topic}</a></li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {similar.length > 0 && (
+        <section class="detail__section">
+          <h2>Also on the shelf</h2>
+          <ul class="link-list">
+            {similar.map((other) => (
+              <li>
+                <a href={link(`app/${other.owner.login}/${other.name}/`)}>{other.name}</a>
+                {other.owner.login !== other.name && <span class="muted"> by {other.owner.login}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <p class="status">
+        Release {released(repo.latestReleaseDate)}. Install files are published by the project on GitHub, not by this site.
+      </p>
+
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    </article>
+  </div>
+</Base>
